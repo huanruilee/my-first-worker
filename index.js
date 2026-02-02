@@ -7,7 +7,7 @@ export default {
 
 // 取得當前小時 (UTC+8 台灣時間)
 const hour = (new Date().getUTCHours() + 8) % 24;
-let greeting = "你好";
+let greeting = "這是我從 GitHub 自動更新的網頁！";
 
 if (hour < 12) {
   greeting = "早安！該喝杯咖啡了 ☕";
