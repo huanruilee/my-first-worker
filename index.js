@@ -1,26 +1,40 @@
 export default {
   async fetch(request, env, ctx) {
+    // 1. 取得 Cloudflare 提供的位置資訊
     const country = request.cf.country || "TW";
     const city = request.cf.city || "Taipei";
+    const lat = request.cf.latitude || "25.03";
+    const lon = request.cf.longitude || "121.56";
     
-    // 1. 抓取隨機名言 API (由 API Ninjas 提供)
+    // 2. 抓取即時天氣 API (Open-Meteo)
+    let weatherInfo = "取得天氣中...";
+    let temp = "--";
+    try {
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+      const weatherData = await weatherRes.json();
+      temp = Math.round(weatherData.current_weather.temperature);
+      const code = weatherData.current_weather.weathercode;
+      // 簡單的天氣代碼轉換
+      weatherInfo = code < 3 ? "晴朗 ☀️" : code < 60 ? "多雲 ☁️" : "下雨 🌧️";
+    } catch (e) {
+      weatherInfo = "天氣服務暫不穩定";
+    }
+
+    // 3. 抓取隨機名言 API
     let quote = "學而時習之，不亦說乎？";
     let author = "孔子";
-    
     try {
-      const quoteRes = await fetch("https://api.quotable.io/random?tags=technology,famous-quotes");
+      const quoteRes = await fetch("https://api.quotable.io/random?tags=famous-quotes");
       const quoteData = await quoteRes.json();
       quote = quoteData.content;
       author = quoteData.author;
-    } catch (e) {
-      // 如果 API 沒回應，就用預設的名言
-    }
+    } catch (e) {}
 
     const hour = (new Date().getUTCHours() + 8) % 24;
-    let greeting = "你好";
-    if (hour < 12) greeting = "早安，開啟美好的一天 ☕";
-    else if (hour < 18) greeting = "午安，工作辛苦了 ☀️";
-    else greeting = "晚安，好好放鬆休息 🌙";
+    let greeting = hour < 12 ? "早安 ☕" : hour < 18 ? "午安 ☀️" : "晚安 🌙";
+
+    // 4. 根據溫度動態改變卡片邊框顏色（低於20度藍色，高於25度橘色）
+    const themeColor = temp < 20 ? "#3498db" : temp > 25 ? "#e67e22" : "#2ecc71";
 
     const html = `
       <!DOCTYPE html>
@@ -28,76 +42,42 @@ export default {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Huanrui 的數位名片</title>
+        <title>Huanrui 的智慧名片</title>
         <style>
-          :root {
-            --primary-color: #f38020;
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          }
           body { 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            background: var(--bg-gradient);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
+            margin: 0; display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; background: #f0f2f5; 
+            font-family: sans-serif;
           }
           .card { 
-            background: rgba(255, 255, 255, 0.95); 
-            padding: 2rem; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            backdrop-filter: blur(10px);
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 85%; max-width: 400px;
+            text-align: center; border-top: 8px solid ${themeColor};
           }
-          .profile-img {
-            width: 100px; height: 100px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; color: white;
+          .weather-badge {
+            background: ${themeColor}22; color: ${themeColor};
+            padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;
           }
-          h1 { color: #2d3436; margin: 0.5rem 0; font-size: 1.5rem; }
-          .location { color: #636e72; font-size: 0.9rem; margin-bottom: 1.5rem; }
-          .quote-box {
-            background: #f1f2f6;
-            padding: 1rem;
-            border-left: 5px solid var(--primary-color);
-            margin: 1.5rem 0;
-            text-align: left;
-            font-style: italic;
-          }
-          .author { display: block; text-align: right; font-weight: bold; margin-top: 0.5rem; color: var(--primary-color); }
-          .flag { width: 30px; vertical-align: middle; margin-left: 5px; border-radius: 3px; }
+          .quote-box { font-style: italic; color: #555; margin: 20px 0; border-top: 1px solid #eee; padding-top: 20px; }
+          .author { display: block; margin-top: 10px; font-weight: bold; color: ${themeColor}; }
         </style>
       </head>
       <body>
         <div class="card">
-          <div class="profile-img">H</div>
-          <h1>${greeting}</h1>
-          <div class="location">
-            📍 伺服器偵測地點：<strong>${city}, ${country}</strong>
-            <img class="flag" src="https://flagcdn.com/w40/${country.toLowerCase()}.png">
-          </div>
+          <div class="weather-badge">${city} · ${temp}°C · ${weatherInfo}</div>
+          <h1 style="color: #333;">${greeting}</h1>
+          <p>您來自 <strong>${country}</strong> <img src="https://flagcdn.com/w20/${country.toLowerCase()}.png"></p>
           
           <div class="quote-box">
             “${quote}”
             <span class="author">— ${author}</span>
           </div>
-          
-          <p style="font-size: 0.8rem; color: #b2bec3;">Powered by Cloudflare Workers & GitHub</p>
+          <small style="color: #ccc;">自動更新時間：${new Date().toLocaleTimeString('zh-TW', {timeZone: 'Asia/Taipei'})}</small>
         </div>
       </body>
       </html>
     `;
 
-    return new Response(html, {
-      headers: { "content-type": "text/html;charset=UTF-8" },
-    });
+    return new Response(html, { headers: { "content-type": "text/html;charset=UTF-8" } });
   },
 };
