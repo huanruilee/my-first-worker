@@ -11,7 +11,7 @@ app.get('/', (c) => {
     <html>
       <head><meta charset="UTF-8"></head>
       <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5;">
-        <h1 style="color: #800000;">Hono 引擎啟動成功！🚀</h1>
+        <h1 style="color: #800000;">Hello! 🚀</h1>
         <p>目前台北時間：<strong>${now}</strong></p>
         <p style="color: #666;">這是一個由 Node.js 環境動態生成的網頁。</p>
         <hr style="width: 200px; border: 1px solid #ddd;">
