@@ -107,6 +107,7 @@ font-family: 'Noto Serif TC', serif;
             <div class="mt-4 md:mt-0 text-right hidden md:block">
                 <span class="block text-xs opacity-75">講記整理：20160625-A/B</span>
                 <span class="block text-xs opacity-75">主題：智慧、法器、功德</span>
+                <span class="block text-xs opacity-75 mt-2">台北時間：<span id="taipei-time">載入中...</span></span>
             </div>
         </div>
     </div>
@@ -632,8 +633,23 @@ font-family: 'Noto Serif TC', serif;
     `;
     document.head.appendChild(styleSheet);
 
+    // --- Taipei Time ---
+    async function fetchTaipeiTime() {
+        try {
+            const res = await fetch('/api/time');
+            const data = await res.json();
+            document.getElementById('taipei-time').textContent = data.time;
+        } catch (e) {
+            document.getElementById('taipei-time').textContent = '無法取得';
+        }
+    }
+
     // --- Init ---
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+        init();
+        fetchTaipeiTime();
+        setInterval(fetchTaipeiTime, 60000); // 每分鐘更新
+    });
 
 </script>
 
