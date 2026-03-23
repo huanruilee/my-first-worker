@@ -2,6 +2,9 @@
   "name": "my-first-worker",
   "main": "index.js",
   "compatibility_date": "2026-02-02",
+  "assets": {
+    "directory": "./public"
+  },
   "observability": {
     "enabled": true
   }
